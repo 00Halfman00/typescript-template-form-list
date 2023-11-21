@@ -1,26 +1,26 @@
 "use strict";
 /*
-  ////////////////    FIRST TASK  (create class and initialise)      ////////////////////
-  1.  create class projectInput
-  2.  creeate a template element field and a host element fields
-  3.  create variable that imports node out of template element
-  4.  create first-child element out of imported node vaiable(step 3)
-  5.  create class method attach and invoke inside constructor that will render form onto HTML page
-  6.  initialise class instance
-  ////////////////    SECOND TASK (create class methods and decorator)    //////////////////////
-  1.  create class method configure and invoke inside constructor to attach eventListener to form submission
-      and pass class method submitHandler, which will have the event as parameter, to eventListener
-  2.  create class method submitHandler to bind class via a decorator to class
-  3.  create three fields containing the three input elements in form by querying the this.formElement,
-      not the document.something something, and initiate them inside constructor
-  4.  create function decorator autoBind and attach to class method submitHandler, inside autoBind create
-      new PropertyDescriptor that has a method that binds the class to its value(originalMethod),
-      to have "this" bound to the class instance
-  ///////////////   THIRD TASK (crate interface and validation function)       /////////////////////////
-  1.  create validation interface object
-  2.  create validation function for input fields
-  3.  invoke validation function inside submitHandler, once for each input
-  4.  erase imput values
+  CHAPTER I:
+  ///////////////////////////// FIRST TASK /////////////////////////////////////////////////////////
+    1.  Create class ProjectForm
+    2.  declare fields for html template element and html div element and
+        retrieve both elements inside class' consturctor
+    3.  retrive node from template via document.importedNode() into variable: const importedNode
+    4.  retrieve first child element(form element) from node(fragment) into a variable: this.formElement
+    5.  create class method named attach to render html form element and its child elements
+        and invoke inside constructor so that it runs when class is initiated
+  //////////////////////////// SECOND TASK /////////////////////////////////////////////////////////
+    1.  create class methods passEvent and submitHandler
+    2.  create decorator function to bind "this" to the class instance, added to submitHandler
+    3.  create fields for inputs inside form and retrieve those elements inside constructor,
+        not from the document.querySelector() but from the first element gotten from
+        the imported template node: formElement.querySelector()
+  ///////////////////////////  THIR TASK  //////////////////////////////////////////////////////////
+    1.  create an interface for validation object
+    2.  create validate function
+    3.  invoke validate function inside submitHandler to validate the data of all three inputs
+    4.  create evaluateInputs function to evaluate all three inputs via validate function
+    5.  clear all three inputs via clearInputs class method
 */
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -28,122 +28,186 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-function validate(inputValues) {
+function validate(validateInput) {
     let isValid = true;
-    if (inputValues.required) {
-        isValid = isValid && (inputValues.value + '').trim().length !== 0;
+    if (validateInput.required) { // no empty inputs allowed
+        isValid = isValid && (validateInput.value + '').trim().length !== 0;
     }
-    if (inputValues.minLength && typeof inputValues.value === 'string') {
-        isValid =
-            isValid && inputValues.value.trim().length > inputValues.minLength;
+    if (validateInput.minLength && typeof validateInput.value === 'string') {
+        isValid = isValid && validateInput.value.length > validateInput.minLength;
     }
-    if (inputValues.maxLength && typeof inputValues.value === 'string') {
-        isValid =
-            isValid && inputValues.value.trim().length < inputValues.maxLength;
+    if (validateInput.maxLength && typeof validateInput.value === 'string') {
+        isValid = isValid && validateInput.value.length < validateInput.maxLength;
     }
-    if (inputValues.min && typeof inputValues.value === 'number') {
-        isValid = isValid && inputValues.value > inputValues.min;
+    if (validateInput.min && typeof validateInput.value === 'number') {
+        isValid = isValid && validateInput.value >= validateInput.min;
     }
-    if (inputValues.max && typeof inputValues.value === 'number') {
-        isValid = isValid && inputValues.value < inputValues.max;
+    if (validateInput.max && typeof validateInput.value === 'number') {
+        isValid = isValid && validateInput.value < validateInput.max;
     }
     return isValid;
 }
+function evaluateInputs(title, description, people, required) {
+    if (validate({
+        value: title,
+        required: required,
+        minLength: 5,
+        maxLength: 25,
+    }) && validate({
+        value: description,
+        required: required,
+        minLength: 10,
+        maxLength: 100,
+    }) && validate({
+        value: title,
+        required: required,
+        min: 1,
+        max: 11
+    })) {
+        return true;
+    }
+    return false;
+}
 function autoBind(_1, _2, descriptor) {
-    const originalMethod = descriptor.value;
+    const originMethod = descriptor.value;
     const modedDescriptor = {
         configurable: true,
         enumerable: false,
         get() {
-            return originalMethod.bind(this);
-        },
+            return originMethod.bind(this);
+        }
     };
     return modedDescriptor;
 }
-class inputForm {
+class ProjectForm {
     constructor() {
-        this.templateElement = document.querySelector('.project-input');
+        this.templateElement = document.querySelector('#project-input');
         this.hostElement = document.querySelector('#app');
-        const importNode = document.importNode(this.templateElement.content, true);
-        this.formElement = importNode.firstElementChild;
+        const importedNode = document.importNode(this.templateElement.content, true);
+        this.formElement = importedNode.firstElementChild;
         this.formElement.id = 'user-input';
         this.titleInputElement = this.formElement.querySelector('#title');
         this.descriptionInputElement = this.formElement.querySelector('#description');
         this.peopleInputElement = this.formElement.querySelector('#people');
         this.attach();
-        this.configure();
+        this.passEvent();
+    }
+    clearInputs() {
+        this.titleInputElement.value = '';
+        this.descriptionInputElement.value = '';
+        this.peopleInputElement.value = '';
+    }
+    submitHandler(event) {
+        event.preventDefault();
+        const title = this.titleInputElement.value;
+        const description = this.descriptionInputElement.value;
+        const people = +this.peopleInputElement.value;
+        this.clearInputs();
+        const required = true;
+        const validInputs = evaluateInputs(title, description, people, required);
+        if (validInputs) {
+            projectState.addProject({ id: '', title, description, people });
+            return [title, description, people];
+        }
+        alert('Invalid inputs');
+    }
+    passEvent() {
+        this.formElement.addEventListener('submit', this.submitHandler);
     }
     attach() {
         this.hostElement.insertAdjacentElement('afterbegin', this.formElement);
     }
-    submitHandler(event) {
-        event.preventDefault();
-        const required = true;
-        const title = this.titleInputElement.value;
-        const description = this.descriptionInputElement.value;
-        const people = +this.peopleInputElement.value;
-        this.titleInputElement.value = '';
-        this.descriptionInputElement.value = '';
-        this.peopleInputElement.value = '';
-        if (validate({
-            value: title,
-            required: required,
-            minLength: 5,
-            maxLength: 25,
-        }) && // title input
-            validate({
-                value: description,
-                required: required,
-                minLength: 5,
-                maxLength: 100,
-            }) && // description input
-            validate({ value: people, required: required, min: 1, max: 11 }) // people input
-        ) {
-            console.log('', title, '\n', description, '\n', people);
-        }
-        else {
-            alert('invalid input values');
-        }
-        return [title, description, people];
-    }
-    configure() {
-        this.formElement.addEventListener('submit', this.submitHandler);
-    }
 }
 __decorate([
     autoBind
-], inputForm.prototype, "submitHandler", null);
-///////////////////////// CLREATE PROJECT CLASS  ///////////////////////////////
+], ProjectForm.prototype, "submitHandler", null);
 /*
-  1.  create class name projectList
-    a.  retrieve template element
-    b.  retrieve host element
-    c.  retrieve node from template
-    d.  aquire first element(section) from node
-  2.  create class method attach to render HTML section element to host element
-  3.  create class method to attach ids and content to elements under template with projects class name
+CHAPTER 2:
+  ///////////////////////////// FIRST TASK /////////////////////////////////////////////////////////
+    1.  Create class ProjectList
+    2.  declare fields for html template element and html div element and
+        retrieve both elements inside class' consturctor
+    3.  retrive node from template via document.importedNode() into variable: const importedNode
+    4.  retrieve first child element(form element) from node(fragment) into a variable: this.sectionElement
+    5.  create attach and configure class methods to render list of projects.
 */
-class projectList {
+class ProjectList {
     constructor(type) {
         this.type = type;
-        this.templateElement = document.querySelector('.projects-list'); //<template id='single-projects'>
-        this.hostElement = document.getElementById('app'); // <div id='app'>
-        const importedNode = document.importNode(this.templateElement.content, true); //  importedNode of type Fragment
-        this.sectionElement = importedNode.firstElementChild; // <section class='projects'>
-        this.unorderListElement = this.sectionElement.querySelector('ul'); // <ul>
-        this.h2Element = this.sectionElement.querySelector('h2'); // <h2>
+        this.templateElement = document.querySelector('#project-list');
+        this.hostElement = document.querySelector('#app');
+        const importedNode = document.importNode(this.templateElement.content, true);
+        this.sectionElement = importedNode.firstElementChild;
+        this.unorderedListElement = this.sectionElement.querySelector('ul');
+        this.h2Element = this.sectionElement.querySelector('h2');
+        this.projects2List = [];
+        projectState.addListener((projects) => {
+            this.projects2List = [...projects];
+            this.renderProjects();
+        });
         this.attach();
-        this.configureContent();
+        this.configure();
     }
-    configureContent() {
+    renderProjects() {
+        this.unorderedListElement.innerHTML = '';
+        this.projects2List.forEach(p => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = p.title;
+            this.unorderedListElement.appendChild(listItem);
+        });
+    }
+    configure() {
         this.sectionElement.id = `${this.type}-projects`;
-        this.unorderListElement.id = `${this.type}-project-list`;
-        this.h2Element.innerText = `${this.type.toUpperCase()} PROJECTS`;
+        this.h2Element.innerHTML = `${this.type.toUpperCase()} PROJECTS`;
+        this.unorderedListElement.id = `${this.type}-projects-list`;
     }
     attach() {
-        this.hostElement.insertAdjacentElement('beforeend', this.sectionElement); // inserAdjacentElement lets you append element at different place whereas appendChild method only adds it to the very end of elements
+        this.hostElement.insertAdjacentElement('beforeend', this.sectionElement);
     }
 }
-const managedProjects = new inputForm();
-const activeProjects = new projectList('active');
-const finishedProjects = new projectList('finished');
+/*
+  CHAPTER III:
+  ///////////////////////////// FIRST TASK /////////////////////////////////////////////////////////
+    1.  Create class ProjectState
+    2.  turn class ProjectStae inso a Singleton class
+    3.  create an class method addProject that adds projects to the class field projectList
+    4.  create class Project and function type: listener
+    5.  create class method addListener that adds a listener function to the class field listeners
+    6.  initialize class and deploy class method using instance inside class ProjectList to add listener to Project state's field: listeners
+    7.  deploy listeners each time a project is added to ProjectState's field projectList
+
+*/
+class Project {
+    constructor(id, title, description, people) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.people = people;
+    }
+}
+class ProjectState {
+    constructor() {
+        this.projectsList = [];
+        this.listeners = [];
+    }
+    static getInstance() {
+        if (this.instance) {
+            return this.instance;
+        }
+        const p = new ProjectState();
+        return p;
+    }
+    addListener(fn) {
+        this.listeners[this.listeners.length] = fn;
+    }
+    addProject(p) {
+        p.id = Math.floor(Math.random() * 100) + '';
+        this.projectsList[this.projectsList.length] = p;
+        this.listeners.forEach(l => l([...this.projectsList]));
+    }
+}
+const projectState = ProjectState.getInstance();
+/////////////////////////////////////////// Initialize program /////////////////////////////////////
+const initializeProject = new ProjectForm();
+const activeProjects = new ProjectList('active');
+const finishedProjects = new ProjectList('finished');

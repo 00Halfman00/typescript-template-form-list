@@ -5,30 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css" />
     <script src="dist/app.js" defer></script>
-    <title>Document</title>
+    <title>Managed Projects</title>
   </head>
   <body>
-    <template class="project-input">
+    <template id="project-input">
       <form>
-        <div id="form-control">
+        <div class="form-control">
           <label for="title">Title</label>
-          <input type="text" id="title" />
+          <input type="text" id="title"/>
         </div>
-        <div id="form-control">
-          <lable for="description">Description</lable>
+        <div class="form-control">
+          <label for="description">Description</label>
           <textarea id="description" rows="3"></textarea>
         </div>
-        <div id="form-control">
-          <lable for="people">People</lable>
-          <input id="people" type="number" step="1" min="0" max="10" />
+        <div class="form-control">
+          <label for="people">People</label>
+          <input id="people" type="number" step="1" min="1" max="10"/>
         </div>
         <button type="submit">ADD PROJECT</button>
       </form>
     </template>
-    <template class="single-projects">
+
+    <template id="single-project">
       <li></li>
     </template>
-    <template class="projects-list">
+
+    <template id="project-list">
       <section class="projects">
         <header>
           <h2></h2>
@@ -36,6 +38,7 @@
         <ul></ul>
       </section>
     </template>
+
     <div id="app"></div>
   </body>
 </html>
