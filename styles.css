@@ -37,6 +37,7 @@ textarea:focus {
 }
 
 button {
+  margin-top: .5rem;
   font: inherit;
   background: #ff0062;
   border: 1px solid #ff0062;
