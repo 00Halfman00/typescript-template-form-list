@@ -1,11 +1,17 @@
 "use strict";
+/////////////////////////   TOOLS   ///////////////////////////////////////
+/*
+  TASK VII: CREATE INTERFACES Drag and Dragged
+    (projects can be dragged to either category: Active Projects or Finished Projects)
+    1.  Drag will have two methods, but only one will be used.
+    2.  Dragged will have three methods that will be used
+*/
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-/////////////////////////   TOOL   ///////////////////////////////////////
 var projectStatus;
 (function (projectStatus) {
     projectStatus["Active"] = "active";
@@ -51,15 +57,29 @@ class ProjectItem extends Base {
             this.h2Element = this.element.querySelector('h2');
         this.h3Element = this.element.querySelector('h3');
         this.pElement = this.element.querySelector('p');
+        this.render();
         this.configure();
     }
+    dragStartHandler(event) {
+        var _a;
+        (_a = event.dataTransfer) === null || _a === void 0 ? void 0 : _a.setData('text/plain', this.project.id);
+        event.dataTransfer.dropEffect = 'move';
+    }
+    dragEndHandler(event) {
+    }
     configure() {
+        this.element.addEventListener('dragstart', this.dragStartHandler);
+        this.element.addEventListener('dragend', this.dragEndHandler);
+    }
+    render() {
         this.h2Element.innerText = this.project.title;
         this.h3Element.innerText = this.peopleString;
         this.pElement.innerText = this.project.description;
     }
-    render() { }
 }
+__decorate([
+    autoBind
+], ProjectItem.prototype, "dragStartHandler", null);
 ////////////////////////////////////////////////////////////////////////////////
 class Project {
     constructor(id, title, description, people, status) {
@@ -93,12 +113,21 @@ class ProjectState extends Listener {
     }
     addProject(p) {
         this.projectsList[this.projectsList.length] = p;
+        this.runListeners();
+    }
+    updateProjectStatus(pId, status) {
+        const p = this.projectsList.find(p => p.id === pId);
+        if (p && status !== p.status) {
+            p.status = status;
+            this.runListeners();
+        }
+    }
+    runListeners() {
         const projectsArr = [...this.projectsList];
         this.listenersList.forEach(l => l(projectsArr));
     }
 }
 const projectState = ProjectState.getInstance();
-////////////////////////////////////////////////////////////////////////////
 /*
   TASK II: CREATE CLASS  ProjectList
     1.  It will handle collecting the user input from three inputs
@@ -118,7 +147,27 @@ class ProjectList extends Base {
         this.configure();
         this.listen();
     }
+    draggedOverHandler(event) {
+        event.preventDefault();
+        this.uListElement.classList.add('droppable');
+    }
+    draggedDropHandler(event) {
+        event.preventDefault();
+        this.uListElement.classList.remove('droppable');
+        if (event.dataTransfer && event.dataTransfer.types.includes('text/plain')) {
+            event.dataTransfer.effectAllowed = 'move';
+            const data = event.dataTransfer.getData('text/plain');
+            projectState.updateProjectStatus(data, this.type === 'active' ? projectStatus.Active : projectStatus.Finished);
+        }
+    }
+    draggedLeaveHandler(event) {
+        event.preventDefault();
+        this.uListElement.classList.remove('droppable');
+    }
     configure() {
+        this.element.addEventListener('dragover', this.draggedOverHandler);
+        this.element.addEventListener('drop', this.draggedDropHandler);
+        this.element.addEventListener('dragleave', this.draggedDropHandler);
         this.uListElement.id = `${this.type}-projects-list`;
         this.h2Element.innerText = `${this.type.toUpperCase()} PROJECTS`;
         this.element.id = `${this.type}-projects`;
@@ -136,6 +185,15 @@ class ProjectList extends Base {
         });
     }
 }
+__decorate([
+    autoBind
+], ProjectList.prototype, "draggedOverHandler", null);
+__decorate([
+    autoBind
+], ProjectList.prototype, "draggedDropHandler", null);
+__decorate([
+    autoBind
+], ProjectList.prototype, "draggedLeaveHandler", null);
 const activeProjects = new ProjectList('active');
 const finishedProjects = new ProjectList('finished');
 /*
@@ -219,9 +277,9 @@ class ProjectForm extends Base {
         const title = this.titleInputElement.value;
         const description = this.descriptiontextAreaElement.value;
         const people = +this.peopleInputElement.value;
+        this.render();
         const required = true;
         const id = Math.floor(Math.random() * 1000) + '';
-        this.render();
         const evaluated = evaluate(title, description, people, required);
         if (evaluated) {
             projectState.addProject(new Project(id, title, description, people, projectStatus.Active));

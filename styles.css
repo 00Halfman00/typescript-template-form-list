@@ -89,6 +89,8 @@ button:active {
 }
 
 .projects li {
+  background-color: white;
+  border-radius: 5px;
   box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.26);
   padding: 1rem;
   margin: 1rem;
